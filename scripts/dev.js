@@ -1,7 +1,21 @@
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { runMigrations } from '../packages/db/src/migrate.js';
 import { startControlCenter } from '../apps/control-center/src/index.js';
 import { startCloudflaredSafely } from '../packages/common/src/tunnel-command.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Mirror start.js: load .env so the in-process control center (and its admin token
+// resolution) agrees with the child services that are booted with --env-file.
+try {
+  const rootEnv = path.resolve(__dirname, '../.env');
+  if (fs.existsSync(rootEnv) && typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile(rootEnv);
+  }
+} catch {}
 
 if (!process.env.YOUPI_MODE) process.env.YOUPI_MODE = 'localhost';
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
